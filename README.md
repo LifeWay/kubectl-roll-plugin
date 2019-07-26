@@ -2,11 +2,11 @@
 
 ## Purpose
 
-`kubectl roll` will "roll" through deleting a target namespace's pods, one by one. In between pod deletions, it will sleep for a default of 30 seconds (or for a number of seconds that you provide).
+`kubectl roll` is a [Kubernetes](https://kubernetes.io/docs/home/) plugin that will "roll" through deleting a target namespace's pods, one by one. In between pod deletions, it will sleep for a default of 30 seconds (or for a number of seconds that you provide).
 
 ## Installation
 
-**Requires `kubectl` v1.12 or higher**
+**Requires [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) v1.12 or higher**
 
 1. Clone repo or copy the 2 files from this repo into the same folder on your computer
 2. Run `./install` from the repo directory
