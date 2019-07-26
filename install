@@ -17,6 +17,6 @@ chmod +x $dest_path
 if [ -f "$dest_path" ] && [ -x $dest_path ]; then
     echo "Install complete! Please restart your shell."
 else 
-    echo "Install failed. Complain to Brant about this."
+    echo "Install failed!"
     exit 0
 fi
