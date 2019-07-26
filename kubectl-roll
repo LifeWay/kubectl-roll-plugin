@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# check if the namespace command and name were given
+if [[ "$1" == "" ]] || [[ "$2" == "" ]]; then
+    echo "► No target namespace given"
+    exit 0
+fi
+
+if [[ "$1" == "namespace" ]] || [[ "$1" == "ns" ]] || [[ "$1" == "-n" ]]; then
+    # variables
+    namespace="$2"
+    pods=$(kubectl get pods -n $namespace -o jsonpath="{.items[*].metadata.name}")
+    cluster=$(kubectl config current-context)
+    dateStart=$(date +'%a %b %d %r %Z %Y')
+    array=( $pods )
+    numOfPods=${#array[@]}
+    counter=0
+
+    # check if any pods exist in pods variable
+    if [[ $pods = "" ]]; then
+        echo "► No pods to delete. Canceling operation..."
+        exit 0
+    fi
+
+    # check if a valid $seconds argument was passed
+    if [[ "$3" == "" ]]; then
+        seconds=30
+    elif (( "$3" < 1 )); then
+        echo "► Invalid seconds argument. Canceling operation..."
+        exit 0
+    else
+        seconds=$3
+    fi
+
+    # calculate total estimated run time
+    let durationSeconds=$seconds*$numOfPods
+    let durationMinutes=$durationSeconds/60
+    let durationHours=$durationMinutes/60
+    let durationHoursRemainder=$durationMinutes-$durationHours*60
+
+    # summary before run
+    echo "► Started: $dateStart"
+    echo "► Rolling namespace $namespace in cluster $cluster"
+    if [[ $durationMinutes = 0 ]]; then
+        echo "► This will take less than 1 minute"
+    elif (( $durationMinutes < 60 )); then
+        echo "► This will take about $durationMinutes minutes"
+    else
+        echo "► This will take about $durationHours hours, $durationHoursRemainder minutes"
+    fi
+    if [[ $seconds = 1 ]]; then
+        echo "► Sleeping $seconds second in between each pod deletion"
+    else
+        echo "► Sleeping $seconds seconds in between each pod deletion"
+    fi
+
+    # main run
+    for i in $pods
+    do
+        let counter=counter+1
+        # check if pod name is valid
+        pattern=" |'"
+        if [[ $i =~ $pattern ]]; then
+            echo "► $i is not a valid pod name"
+        else
+            # check if still authenticated to cluster
+            check=$(kubectl get pods -n $namespace)
+            check2=$(kubectl get pod -n $namespace $i)
+            if [[ $check == "" ]]; then
+                echo "► No longer authenticated to cluster. Canceling..."
+                exit 0
+            elif [[ $check2 == "" ]]; then
+                echo "► $i no longer exists"
+            else
+                kubectl delete pod -n $namespace $i
+                # check if not running against last pod in the list
+                if [[ $numOfPods != $counter ]]; then
+                    sleep $seconds
+                fi
+            fi
+        fi
+    done
+    
+    dateEnd=$(date +'%a %b %d %r %Z %Y')
+    echo "► Ended: $dateEnd"
+    exit 0
+fi
+
+echo "► No action performed"

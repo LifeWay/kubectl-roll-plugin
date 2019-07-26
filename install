@@ -1,0 +1,22 @@
+src_path=./kubectl-roll
+dest_path=/usr/local/bin/kubectl-roll
+
+# check for source file
+if [ ! -f "$src_path" ]; then
+    echo "Could not find $src_path at expected path"
+    exit 0
+fi
+
+# copy file
+cp $src_path $dest_path
+
+# make file executable
+chmod +x $dest_path
+
+# make sure copy and executable commands completed
+if [ -f "$dest_path" ] && [ -x $dest_path ]; then
+    echo "Install complete! Please restart your shell."
+else 
+    echo "Install failed. Complain to Brant about this."
+    exit 0
+fi
