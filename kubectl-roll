@@ -9,27 +9,46 @@ fi
 if [[ "$1" == "namespace" ]] || [[ "$1" == "ns" ]] || [[ "$1" == "-n" ]]; then
     # variables
     namespace="$2"
-    pods=$(kubectl get pods -n $namespace -o jsonpath="{.items[*].metadata.name}")
     cluster=$(kubectl config current-context)
     dateStart=$(date +'%a %b %d %r %Z %Y')
     array=( $pods )
     numOfPods=${#array[@]}
     counter=0
 
+    # set variables differently if label is supplied
+    if [[ "$3" == "-l" ]] || [[ "$3" == "--selector" ]]; then
+        label="$4"
+        pods=$(kubectl get pods -n $namespace -l $label -o jsonpath="{.items[*].metadata.name}")
+        summary="► Rolling namespace $namespace in cluster $cluster with label $4"
+
+        # check if a valid $seconds argument was passed
+        if [[ "$5" == "" ]]; then
+            seconds=30
+        elif (( "$5" < 1 )); then
+            echo "► Invalid seconds argument. Canceling operation..."
+            exit 0
+        else
+            seconds=$5
+        fi
+    else
+        pods=$(kubectl get pods -n $namespace -o jsonpath="{.items[*].metadata.name}")
+        summary="► Rolling namespace $namespace in cluster $cluster"
+        
+        # check if a valid $seconds argument was passed
+        if [[ "$3" == "" ]]; then
+            seconds=30
+        elif (( "$3" < 1 )); then
+            echo "► Invalid seconds argument. Canceling operation..."
+            exit 0
+        else
+            seconds=$3
+        fi
+    fi
+
     # check if any pods exist in pods variable
     if [[ $pods = "" ]]; then
         echo "► No pods to delete. Canceling operation..."
         exit 0
-    fi
-
-    # check if a valid $seconds argument was passed
-    if [[ "$3" == "" ]]; then
-        seconds=30
-    elif (( "$3" < 1 )); then
-        echo "► Invalid seconds argument. Canceling operation..."
-        exit 0
-    else
-        seconds=$3
     fi
 
     # calculate total estimated run time
@@ -40,7 +59,7 @@ if [[ "$1" == "namespace" ]] || [[ "$1" == "ns" ]] || [[ "$1" == "-n" ]]; then
 
     # summary before run
     echo "► Started: $dateStart"
-    echo "► Rolling namespace $namespace in cluster $cluster"
+    echo $summary
     if [[ $durationMinutes = 0 ]]; then
         echo "► This will take less than 1 minute"
     elif (( $durationMinutes < 60 )); then
