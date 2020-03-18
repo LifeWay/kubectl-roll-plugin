@@ -33,7 +33,7 @@ if [[ "$1" == "namespace" ]] || [[ "$1" == "ns" ]] || [[ "$1" == "-n" ]]; then
     else
         pods=$(kubectl get pods -n $namespace -o jsonpath="{.items[*].metadata.name}")
         summary="► Rolling namespace $namespace in cluster $cluster"
-        
+
         # check if a valid $seconds argument was passed
         if [[ "$3" == "" ]]; then
             seconds=30
@@ -99,7 +99,7 @@ if [[ "$1" == "namespace" ]] || [[ "$1" == "ns" ]] || [[ "$1" == "-n" ]]; then
             fi
         fi
     done
-    
+
     dateEnd=$(date +'%a %b %d %r %Z %Y')
     echo "► Ended: $dateEnd"
     exit 0

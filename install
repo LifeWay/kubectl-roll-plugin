@@ -16,7 +16,7 @@ chmod +x $dest_path
 # make sure copy and executable commands completed
 if [ -f "$dest_path" ] && [ -x $dest_path ]; then
     echo "Install complete! Please restart your shell."
-else 
+else
     echo "Install failed!"
     exit 0
 fi
