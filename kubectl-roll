@@ -11,14 +11,14 @@ if [[ "$1" == "namespace" ]] || [[ "$1" == "ns" ]] || [[ "$1" == "-n" ]]; then
     namespace="$2"
     cluster=$(kubectl config current-context)
     dateStart=$(date +'%a %b %d %r %Z %Y')
-    array=( $pods )
-    numOfPods=${#array[@]}
     counter=0
 
     # set variables differently if label is supplied
     if [[ "$3" == "-l" ]] || [[ "$3" == "--selector" ]]; then
         label="$4"
         pods=$(kubectl get pods -n $namespace -l $label -o jsonpath="{.items[*].metadata.name}")
+        array=( $pods )
+        numOfPods=${#array[@]}
         summary="► Rolling namespace $namespace in cluster $cluster with label $4"
 
         # check if a valid $seconds argument was passed
@@ -32,6 +32,8 @@ if [[ "$1" == "namespace" ]] || [[ "$1" == "ns" ]] || [[ "$1" == "-n" ]]; then
         fi
     else
         pods=$(kubectl get pods -n $namespace -o jsonpath="{.items[*].metadata.name}")
+        array=( $pods )
+        numOfPods=${#array[@]}
         summary="► Rolling namespace $namespace in cluster $cluster"
 
         # check if a valid $seconds argument was passed
@@ -61,11 +63,11 @@ if [[ "$1" == "namespace" ]] || [[ "$1" == "ns" ]] || [[ "$1" == "-n" ]]; then
     echo "► Started: $dateStart"
     echo $summary
     if [[ $durationMinutes = 0 ]]; then
-        echo "► This will take less than 1 minute"
+        echo "► This should take less than 1 minute"
     elif (( $durationMinutes < 60 )); then
-        echo "► This will take about $durationMinutes minutes"
+        echo "► This should take about $durationMinutes minutes"
     else
-        echo "► This will take about $durationHours hours, $durationHoursRemainder minutes"
+        echo "► This should take about $durationHours hours, $durationHoursRemainder minutes"
     fi
     if [[ $seconds = 1 ]]; then
         echo "► Sleeping $seconds second in between each pod deletion"
