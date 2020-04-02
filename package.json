@@ -1,6 +1,6 @@
 {
   "name": "kubectl-roll-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Slowly restart pods by namespace or label",
   "main": "index.js",
   "scripts": {
