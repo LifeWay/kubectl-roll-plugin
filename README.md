@@ -32,3 +32,13 @@ or
 - You are required to provide the target namespace name and can optionally provide the number of seconds to sleep in between each pod deletion. If you do not specify a `seconds` argument, the default is 30.
 - Your current kubeconfig context will be used for the plugin's execution.
 - You can also use `namespace` or `ns` in place of `-n` and `--selector` in place of `-l`.
+
+## Semantic Releases
+
+This plugin follows [SemVer](https://semver.org/). The [semantic-release](https://github.com/semantic-release/semantic-release) library is used to manage version numbers, cut GitHub releases, and create/update the [changelog](CHANGELOG.md). The commit message format determines the release number and is enforced with a [pre-commit hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) (implemented via [husky](https://github.com/typicode/husky)). Commit messages must adhere to the guidlines outlined by the [Angular project](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines). Here is an example of the release type that will be created based on the commit message:
+
+| Commit message                                                                                                                                                                                   | Release type               |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------|
+| `fix(pencil): stop graphite breaking when too much pressure applied`                                                                                                                             | Patch Release              |
+| `feat(pencil): add 'graphiteWidth' option`                                                                                                                                                       | ~~Minor~~ Feature Release  |
+| `perf(pencil): remove graphiteWidth option`<br><br>`BREAKING CHANGE: The graphiteWidth option has been removed.`<br>`The default graphite width of 10mm is always used for performance reasons.` | ~~Major~~ Breaking Release |
