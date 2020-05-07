@@ -10,99 +10,91 @@ if [[ "$1" == "namespace" ]] || [[ "$1" == "ns" ]] || [[ "$1" == "-n" ]]; then
     # variables
     namespace="$2"
     cluster=$(kubectl config current-context)
-    dateStart=$(date +'%a %b %d %r %Z %Y')
-    counter=0
 
-    # set variables differently if label is supplied
-    if [[ "$3" == "-l" ]] || [[ "$3" == "--selector" ]]; then
-        label="$4"
-        pods=$(kubectl get pods -n $namespace -l $label -o jsonpath="{.items[*].metadata.name}")
-        array=( $pods )
-        numOfPods=${#array[@]}
-        summary="► Rolling namespace $namespace in cluster $cluster with label $4"
+    statefulSets=$(kubectl get statefulsets -n $namespace -o jsonpath="{.items[*].metadata.name}")
+    statefulSetArray=( $statefulSets )
+    numOfStatefulSets=${#statefulSetArray[@]}
+    podsInStatefulSets=$(kubectl get statefulsets -n $namespace -o jsonpath="{.items[*].status.replicas}")
 
-        # check if a valid $seconds argument was passed
-        if [[ "$5" == "" ]]; then
-            seconds=30
-        elif (( "$5" < 1 )); then
-            echo "► Invalid seconds argument. Canceling operation..."
-            exit 0
-        else
-            seconds=$5
-        fi
+    deployments=$(kubectl get deployments -n $namespace -o jsonpath="{.items[*].metadata.name}")
+    deploymentArray=( $deployments )
+    numOfDeployments=${#deploymentArray[@]}
+    podsInDeployments=$(kubectl get deployments -n $namespace -o jsonpath="{.items[*].status.replicas}")
+
+    daemonSets=$(kubectl get daemonsets -n $namespace -o jsonpath="{.items[*].metadata.name}")
+    daemonSetArray=( $daemonSets )
+    numOfDaemonsets=${#daemonSetArray[@]}
+    podsInDaemonSets=$(kubectl get daemonsets -n $namespace -o jsonpath="{.items[*].status.desiredNumberScheduled}")
+
+    pods=$(kubectl get pods -n $namespace -o jsonpath="{.items[*].metadata.name}")
+    podArray=( $pods )
+    numOfPods=${#podArray[@]}
+
+    # sum up pods to be restarted
+    totalRollingPods=0
+    for i in ${podsInStatefulSets[@]}; do
+    let totalRollingPods+=$i
+    done
+    for i in ${podsInDeployments[@]}; do
+    let totalRollingPods+=$i
+    done
+    for i in ${podsInDaemonSets[@]}; do
+    let totalRollingPods+=$i
+    done
+
+    # check if a valid $seconds argument was passed
+    regEx='^[0-9]+$'
+    if [[ "$3" == "" ]]; then
+        seconds=5
+    elif ! [[ "$3" =~ $regEx ]]; then
+        echo "► Invalid seconds argument. Canceling operation..."
+        exit 1
     else
-        pods=$(kubectl get pods -n $namespace -o jsonpath="{.items[*].metadata.name}")
-        array=( $pods )
-        numOfPods=${#array[@]}
-        summary="► Rolling namespace $namespace in cluster $cluster"
-
-        # check if a valid $seconds argument was passed
-        if [[ "$3" == "" ]]; then
-            seconds=30
-        elif (( "$3" < 1 )); then
-            echo "► Invalid seconds argument. Canceling operation..."
-            exit 0
-        else
-            seconds=$3
-        fi
+        seconds=$3
     fi
-
-    # check if any pods exist in pods variable
-    if [[ $pods = "" ]]; then
-        echo "► No pods to delete. Canceling operation..."
-        exit 0
-    fi
-
-    # calculate total estimated run time
-    let durationSeconds=$seconds*$numOfPods
-    let durationMinutes=$durationSeconds/60
-    let durationHours=$durationMinutes/60
-    let durationHoursRemainder=$durationMinutes-$durationHours*60
 
     # summary before run
+    dateStart=$(date +'%a %b %d %r %Z %Y')
+    summary="► Rolling namespace $namespace in cluster $cluster"
     echo "► Started: $dateStart"
     echo $summary
-    if [[ $durationMinutes = 0 ]]; then
-        echo "► This should take less than 1 minute"
-    elif (( $durationMinutes < 60 )); then
-        echo "► This should take about $durationMinutes minutes"
-    else
-        echo "► This should take about $durationHours hours, $durationHoursRemainder minutes"
-    fi
-    if [[ $seconds = 1 ]]; then
-        echo "► Sleeping $seconds second in between each pod deletion"
-    else
-        echo "► Sleeping $seconds seconds in between each pod deletion"
-    fi
 
     # main run
-    for i in $pods
-    do
+    counter=0
+    for i in $statefulSets; do
         let counter=counter+1
-        # check if pod name is valid
-        pattern=" |'"
-        if [[ $i =~ $pattern ]]; then
-            echo "► $i is not a valid pod name"
-        else
-            # check if still authenticated to cluster
-            check=$(kubectl get pods -n $namespace)
-            check2=$(kubectl get pod -n $namespace $i)
-            if [[ $check == "" ]]; then
-                echo "► No longer authenticated to cluster. Canceling..."
-                exit 0
-            elif [[ $check2 == "" ]]; then
-                echo "► $i no longer exists"
-            else
-                kubectl delete pod -n $namespace $i
-                # check if not running against last pod in the list
-                if [[ $numOfPods != $counter ]]; then
-                    sleep $seconds
-                fi
-            fi
+        kubectl -n $namespace rollout restart statefulset $i
+        if [[ $totalNum != $counter ]]; then
+            sleep $seconds
         fi
     done
 
+    for i in $deployments; do
+        let counter=counter+1
+        kubectl -n $namespace rollout restart deployments $i
+        if [[ $totalNum != $counter ]]; then
+            sleep $seconds
+        fi
+    done
+
+    for i in $daemonSets; do
+        let counter=counter+1
+        kubectl -n $namespace rollout restart daemonsets $i
+        if [[ $totalNum != $counter ]]; then
+            sleep $seconds
+        fi
+    done
+
+    # conclusion summary
     dateEnd=$(date +'%a %b %d %r %Z %Y')
+    if [[ "$numOfPods" == "$totalRollingPods" ]]; then
+        echo "All pods in namespace $namespace were scheduled to be restarted"
+    elif (( $numOfPods < $totalRollingPods )); then
+        echo "ERROR: More pods were restarted than expected"
+    else
+        numMissedPods=$(( $numOfPods - $totalRollingPods ))
+        echo "► WARNING: $numMissedPods pods in namespace $namespace were not restarted"
+    fi
     echo "► Ended: $dateEnd"
     exit 0
 fi
