@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`kubectl roll` is a [Kubernetes](https://kubernetes.io/docs/home/) client-side plugin that will "roll" through deleting a target namespace's pods, one by one. In between pod deletions, it will sleep for a default of 30 seconds (or for a number of seconds that you provide). You can also supply a label within that namespace to further target the pods to be deleted.
+`kubectl roll` is a [Kubernetes](https://kubernetes.io/docs/home/) client-side plugin that will "roll" through deleting a target namespace's pods by targeting the StatefulSets, DaemonSets, and Deployments in that namespace. In between resource restarts, it will sleep for a default of 5 seconds (or for a number of seconds that you provide). Any standalone pods in the namespace will be ignored and a warning will display to notify the user of the number of pods in the namespace that were not restarted.
 
 ## Installation
 
@@ -17,21 +17,13 @@
 
 `kubectl roll -n {namespace} {seconds}`
 
-or
-
-`kubectl roll -n {namespace} -l {label} {seconds}`
-
 Ex.
 
 `kubectl roll -n api-prod 15`
 
-or
-
-`kubectl roll -n api-prod -l name=shipping-api 15`
-
-- You are required to provide the target namespace name and can optionally provide the number of seconds to sleep in between each pod deletion. If you do not specify a `seconds` argument, the default is 30.
+- You are required to provide the target namespace name and can optionally provide the number of seconds to sleep in between each resource restart. If you do not specify a `seconds` argument, the default is 5.
 - Your current kubeconfig context will be used for the plugin's execution.
-- You can also use `namespace` or `ns` in place of `-n` and `--selector` in place of `-l`.
+- You can also use `namespace` or `ns` in place of `-n`.
 
 ## Semantic Releases
 
