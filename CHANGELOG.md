@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/LifeWay/kubectl-roll-plugin/compare/1.0.3...1.0.4) (2020-05-19)
+
+
+### Performance Improvements
+
+* add comment ([5745abe](https://github.com/LifeWay/kubectl-roll-plugin/commit/5745abece9ee6cece3d03cf56fd920d166ee8614))
+
 ## [1.0.3](https://github.com/LifeWay/kubectl-roll-plugin/compare/1.0.2...1.0.3) (2020-05-19)
 
 
