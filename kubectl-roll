@@ -76,4 +76,5 @@ if [[ "$1" == "--namespace" ]] || [[ "$1" == "-n" ]]; then
     exit 0
 fi
 
-echo "► No action performed"
+# message if nothing happened
+echo "► WARNING: No action performed"
