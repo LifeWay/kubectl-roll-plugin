@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/LifeWay/kubectl-roll-plugin/compare/1.0.2...1.0.3) (2020-05-19)
+
+
+### Performance Improvements
+
+* remove seconds argument ([49b028d](https://github.com/LifeWay/kubectl-roll-plugin/commit/49b028de7ab8a2e9b416d5e1e4d7ef1155f1dc81))
+
 ## [1.0.2](https://github.com/LifeWay/kubectl-roll-plugin/compare/1.0.1...1.0.2) (2020-05-07)
 
 
