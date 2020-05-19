@@ -6,7 +6,7 @@ if [[ "$1" == "" ]] || [[ "$2" == "" ]]; then
     exit 0
 fi
 
-if [[ "$1" == "namespace" ]] || [[ "$1" == "ns" ]] || [[ "$1" == "-n" ]]; then
+if [[ "$1" == "--namespace" ]] || [[ "$1" == "-n" ]]; then
     # variables
     namespace="$2"
     cluster=$(kubectl config current-context)
@@ -42,47 +42,24 @@ if [[ "$1" == "namespace" ]] || [[ "$1" == "ns" ]] || [[ "$1" == "-n" ]]; then
     let totalRollingPods+=$i
     done
 
-    # check if a valid $seconds argument was passed
-    regEx='^[0-9]+$'
-    if [[ "$3" == "" ]]; then
-        seconds=5
-    elif ! [[ "$3" =~ $regEx ]]; then
-        echo "► Invalid seconds argument. Canceling operation..."
-        exit 1
-    else
-        seconds=$3
-    fi
-
     # summary before run
     dateStart=$(date +'%a %b %d %r %Z %Y')
     summary="► Rolling namespace $namespace in cluster $cluster"
     echo "► Started: $dateStart"
     echo $summary
+    echo "CAUTION: Switching contexts during the roll will interrupt the operation"
 
     # main run
-    counter=0
     for i in $statefulSets; do
-        let counter=counter+1
         kubectl -n $namespace rollout restart statefulset $i
-        if [[ $totalNum != $counter ]]; then
-            sleep $seconds
-        fi
     done
 
     for i in $deployments; do
-        let counter=counter+1
-        kubectl -n $namespace rollout restart deployments $i
-        if [[ $totalNum != $counter ]]; then
-            sleep $seconds
-        fi
+        kubectl -n $namespace rollout restart deployment $i
     done
 
     for i in $daemonSets; do
-        let counter=counter+1
-        kubectl -n $namespace rollout restart daemonsets $i
-        if [[ $totalNum != $counter ]]; then
-            sleep $seconds
-        fi
+        kubectl -n $namespace rollout restart daemonset $i
     done
 
     # conclusion summary
